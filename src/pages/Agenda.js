@@ -3,10 +3,12 @@ import { Text, View, StyleSheet, ImageBackground, Platform, FlatList, TouchableO
 import moment from 'moment';
 import 'moment/locale/pt-br';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import ActionButton from 'react-native-action-button';
 
 import todayImage from '../../assets/imgs/today.jpg';
 import globalStyles from '../globalStyles';
 import Task from '../components/Task';
+import TaskCreate from './TaskCreate';
 
 export default class Agenda extends Component {
     state = {
@@ -41,7 +43,8 @@ export default class Agenda extends Component {
             },
         ],
         visibleTasks: [],
-        showDoneTasks: true
+        showDoneTasks: true,
+        showCreateTask: false
     }
 
     componentDidMount = () => {
@@ -60,7 +63,7 @@ export default class Agenda extends Component {
             visibleTasks = [...this.state.tasks]
         } else {
             var pending = task => task.doneAt === null;
-            visibleTasks = this.state.tasks.filter(pending); 
+            visibleTasks = this.state.tasks.filter(pending);
         }
         this.setState({ visibleTasks });
     }
@@ -69,9 +72,23 @@ export default class Agenda extends Component {
         this.setState({ showDoneTasks: !this.state.showDoneTasks }, this.filterTasks);
     }
 
+    addTask = task => {
+        var tasks = [...this.state.tasks];
+        tasks.push({
+            id: Math.random(),
+            desc: task.desc,
+            estimateAt: task.date,
+            doneAt: null
+        });
+        this.setState({ tasks, showCreateTask: false }, this.filterTasks);
+    }
+
     render() {
         return (
             <View style={styles.container}>
+                <TaskCreate isVisible={this.state.showCreateTask}
+                    onSave={this.addTask}
+                    onCancel={() => this.setState({ showCreateTask: false })}></TaskCreate>
                 <ImageBackground source={todayImage} style={styles.background}>
                     <View style={styles.iconBar}>
                         <TouchableOpacity onPress={this.toggleVisible}>
@@ -91,6 +108,8 @@ export default class Agenda extends Component {
                         keyExtractor={item => `${item.id}`}
                         renderItem={({ item }) => <Task {...item} toggleTask={this.toggleTask} />}></FlatList>
                 </View>
+                <ActionButton buttonColor={globalStyles.colors.today}
+                    onPress={() => this.setState({ showCreateTask: true })}></ActionButton>
             </View>
         )
     }
