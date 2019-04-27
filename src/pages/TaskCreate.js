@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-    View, Modal, Alert,
+    View, Modal, Alert, Platform,
     Text, TextInput, StyleSheet,
     DatePickerAndroid, DatePickerIOS,
     TouchableWithoutFeedback, TouchableOpacity
@@ -14,6 +14,20 @@ var initialState = { desc: '', date: new Date() };
 export default class TaskCreate extends Component {
     state = { ...initialState };
 
+    handleDateAndroidChanged = () => {
+        DatePickerAndroid.open({
+            date: this.state.date
+        }).then(e => {
+            if (e.action !== DatePickerAndroid.dismissedAction) {
+                var momentDate = moment(this.state.date);
+                momentDate.date(e.day);
+                momentDate.month(e.year);
+                momentDate.year(e.year);
+                this.setState({ date: momentDate.toDate() });
+            }
+        });
+    };
+
     save = () => {
         if (!this.state.desc || this.state.desc.length == 0) {
             Alert.alert('Dados inválidos', 'Favor preencher a descrição');
@@ -26,6 +40,19 @@ export default class TaskCreate extends Component {
     }
 
     render() {
+        let datePicker = null;
+        if (Platform.OS === 'ios') {
+            datePicker = <DatePickerIOS model='date' date={this.state.date}
+                onDateChange={date => this.setState({ date })}></DatePickerIOS>;
+        } else {
+            datePicker = (
+                <TouchableOpacity onPress={this.handleDateAndroidChanged}>
+                    <Text style={styles.date}>
+                        {moment(this.state.date).locale('pt-br').format('ddd, D [de] MMMM')}
+                    </Text>
+                </TouchableOpacity>
+            );
+        }
         return (
             <Modal onRequestClose={this.props.onCancel}
                 visible={this.props.isVisible}
@@ -38,8 +65,7 @@ export default class TaskCreate extends Component {
                     <TextInput placeholder='Preencha a descrição' style={styles.input}
                         onChangeText={desc => this.setState({ desc })}
                         value={this.state.desc}></TextInput>
-                    <DatePickerIOS model='date' date={this.state.date}
-                        onDateChange={date => this.setState({ date })}></DatePickerIOS>
+                    {datePicker}
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
                         <TouchableOpacity onPress={this.props.onCancel}>
                             <Text style={styles.button}>Cancelar</Text>
