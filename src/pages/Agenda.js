@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, ImageBackground, Platform, FlatList, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -47,8 +48,10 @@ export default class Agenda extends Component {
         showCreateTask: false
     }
 
-    componentDidMount = () => {
-        this.filterTasks();
+    componentDidMount = async () => {
+        const data = await AsyncStorage.getItem('tasks');
+        const tasks = JSON.parse(data) || [];
+        this.setState({ tasks }, this.filterTasks);
     }
 
     toggleTask = id => {
@@ -81,6 +84,12 @@ export default class Agenda extends Component {
             doneAt: null
         });
         this.setState({ tasks, showCreateTask: false }, this.filterTasks);
+        AsyncStorage.setItem('tasks', JSON.stringify(this.state.task));
+    }
+
+    deleteTask = id => {
+        var tasks = this.state.tasks.filter(x => x.id != id);
+        this.setState({ tasks }, this.filterTasks);
     }
 
     render() {
@@ -106,7 +115,7 @@ export default class Agenda extends Component {
                 <View style={styles.tasksContainer}>
                     <FlatList data={this.state.visibleTasks}
                         keyExtractor={item => `${item.id}`}
-                        renderItem={({ item }) => <Task {...item} toggleTask={this.toggleTask} />}></FlatList>
+                        renderItem={({ item }) => <Task {...item} onToggleTask={this.toggleTask} onDelete={this.deleteTask} />}></FlatList>
                 </View>
                 <ActionButton buttonColor={globalStyles.colors.today}
                     onPress={() => this.setState({ showCreateTask: true })}></ActionButton>
