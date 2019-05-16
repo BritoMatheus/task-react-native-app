@@ -10,9 +10,19 @@ import 'moment/locale/pt-br';
 
 import globalStyles from '../globalStyles';
 
-var initialState = { desc: '', date: new Date() };
 export default class TaskCreate extends Component {
-    state = { ...initialState };
+
+    constructor(props) {
+        super(props);
+        this.state = this.getInitialstate();
+    }
+
+    getInitialstate = () => {
+        return {
+            desc: '',
+            date: new Date()
+        }
+    }
 
     handleDateAndroidChanged = () => {
         DatePickerAndroid.open({
@@ -33,10 +43,8 @@ export default class TaskCreate extends Component {
             Alert.alert('Dados inválidos', 'Favor preencher a descrição');
             return;
         }
-
         var data = { ...this.state };
         this.props.onSave(data);
-        this.setState({ ...initialState });
     }
 
     render() {
@@ -56,7 +64,8 @@ export default class TaskCreate extends Component {
         return (
             <Modal onRequestClose={this.props.onCancel}
                 visible={this.props.isVisible}
-                animationType='slide' transparent={true}>
+                animationType='slide' transparent={true}
+                onShow={() => this.state = this.getInitialstate()}>
                 <TouchableWithoutFeedback onPress={this.props.onCancel}>
                     <View style={styles.offset}></View>
                 </TouchableWithoutFeedback>
