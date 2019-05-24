@@ -31,7 +31,7 @@ export default class TaskCreate extends Component {
             if (e.action !== DatePickerAndroid.dismissedAction) {
                 var momentDate = moment(this.state.date);
                 momentDate.date(e.day);
-                momentDate.month(e.year);
+                momentDate.month(e.month);
                 momentDate.year(e.year);
                 this.setState({ date: momentDate.toDate() });
             }

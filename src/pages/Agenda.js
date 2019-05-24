@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, ImageBackground, Platform, FlatList, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, ImageBackground, Platform, FlatList, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import ActionButton from 'react-native-action-button';
 
@@ -8,10 +8,14 @@ import 'moment/locale/pt-br';
 import axios from 'axios';
 
 import { server, showError } from '../commom';
-import todayImage from '../../assets/imgs/today.jpg';
 import globalStyles from '../globalStyles';
 import Task from '../components/Task';
 import TaskCreate from './TaskCreate';
+
+import todayImage from '../../assets/imgs/today.jpg';
+import tomorrowImage from '../../assets/imgs/tomorrow.jpg';
+import weekImage from '../../assets/imgs/week.jpg';
+import monthImage from '../../assets/imgs/month.jpg';
 
 export default class Agenda extends Component {
     state = {
@@ -51,14 +55,12 @@ export default class Agenda extends Component {
     }
 
     componentDidMount = async () => {
-
-        const tasks = JSON.parse(data) || [];
-        this.setState({ tasks }, this.filterTasks);
+        this.loadTasks();
     }
 
     toggleTask = async id => {
         try {
-            await axios.put(`${server}/task/${id}/toggle`);
+            await axios.put(`${server}task/${id}/toggle`);
             await this.loadTasks();
         } catch (error) {
             showError(error);
@@ -82,19 +84,25 @@ export default class Agenda extends Component {
 
     addTask = async task => {
         try {
-            await axios.post(`${server}task`, {
+            var estimateAt = new Date(task.date).toLocaleString();
+            var result = await axios.post(`${server}task`, {
                 descricao: task.desc,
-                estimateAt: task.date
+                estimateAt: estimateAt
             });
             this.setState({ showCreateTask: false }, this.loadTasks);
         } catch (error) {
-            showError(error);
+            Alert.alert('Ocorreu um erro :(', `Mensagem: ${error}`)
+            //showError(error);
         }
+    }
+
+    onCancel = () => {
+        this.setState({ showCreateTask: false }, this.loadTasks);
     }
 
     deleteTask = async id => {
         try {
-            await axios.delete(`${server}/task/${id}`);
+            await axios.delete(`${server}task/${id}`);
             this.loadTasks();
         } catch (error) {
             showError(error);
@@ -103,29 +111,57 @@ export default class Agenda extends Component {
 
     loadTasks = async () => { 
         try {
-            const maxDate = moment().format(`YYYY-MM-DD 23:59`);
-            const res = await axios.get(`${server}/tasks?date=${maxDate}`);
+            const maxDate = moment().add({ days: this.props.daysAhead }).format(`YYYY-MM-DD 00:00`);
+            const res = await axios.get(`${server}task?date=${maxDate}`);
             this.setState({ tasks: res.data }, this.filterTasks);
         } catch (error) {
-            showError(error);
+            Alert.alert('Erro :(', `Mensagem: ${error}`)
+            //showError(error);
         }
     }
 
     render() {
+        let styleColor = null;
+        let image = null;
+
+        switch (this.props.daysAhead) {
+            case 0:
+                styleColor = globalStyles.colors.today;
+                image = todayImage;
+                break;
+            case 1:
+                styleColor = globalStyles.colors.tomorrow;
+                image = tomorrowImage;
+                break;
+            case 7:
+                styleColor = globalStyles.colors.week;
+                image = weekImage;
+                break;
+            default:
+            case 0:
+                styleColor = globalStyles.colors.month;
+                image = monthImage;
+                break;
+        }
+
+
         return (
             <View style={styles.container}>
                 <TaskCreate isVisible={this.state.showCreateTask}
                     onSave={this.addTask}
-                    onCancel={() => this.setState({ showCreateTask: false })}></TaskCreate>
-                <ImageBackground source={todayImage} style={styles.background}>
+                    onCancel={this.onCancel}></TaskCreate>
+                <ImageBackground source={image} style={styles.background}>
                     <View style={styles.iconBar}>
+                        <TouchableOpacity onPress={() => this.props.navigation.openDrawer()}>
+                            <Icon name='bars' size={20} color={globalStyles.colors.secondary}></Icon>
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={this.toggleVisible}>
                             <Icon name={this.state.showDoneTasks ? 'eye' : 'eye-slash'}
                                 size={20} color={globalStyles.colors.secondary}></Icon>
                         </TouchableOpacity>
                     </View>
                     <View style={styles.titleBar}>
-                        <Text style={styles.title}>Hoje</Text>
+                        <Text style={styles.title}>{this.props.title}</Text>
                         <Text style={styles.subtitle}>
                             {moment().locale('pt-br').format('ddd, D [de] MMMM')}
                         </Text>
@@ -133,10 +169,10 @@ export default class Agenda extends Component {
                 </ImageBackground>
                 <View style={styles.tasksContainer}>
                     <FlatList data={this.state.visibleTasks}
-                        keyExtractor={item => `${item.id}`}
+                        keyExtractor={item => `${item.Id}`}
                         renderItem={({ item }) => <Task {...item} onToggleTask={this.toggleTask} onDelete={this.deleteTask} />}></FlatList>
                 </View>
-                <ActionButton buttonColor={globalStyles.colors.today}
+                <ActionButton buttonColor={styleColor}
                     onPress={() => this.setState({ showCreateTask: true })}></ActionButton>
             </View>
         )
@@ -175,7 +211,7 @@ const styles = StyleSheet.create({
         marginTop: Platform.OS === 'ios' ? 30 : 10,
         marginHorizontal: 20,
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
     }
 
 })

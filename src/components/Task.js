@@ -12,7 +12,7 @@ import globalStyles from '../globalStyles'
 
 export default props => {
     let check = null;
-    if (props.doneAt !== null) {
+    if (props.DoneAt !== null) {
         check = (
             <View style={styles.done}>
                 <Icon name='check' size={20}
@@ -23,7 +23,7 @@ export default props => {
         check = <View style={styles.pending}></View>
     }
 
-    const descStyle = props.doneAt !== null ? { textDecorationLine: 'line-through' } : {}
+    const descStyle = props.DoneAt !== null ? { textDecorationLine: 'line-through' } : {}
 
     const leftContent = (
         <View style={styles.exclude}>
@@ -35,24 +35,24 @@ export default props => {
     const rightContent = [
         <TouchableOpacity
             style={[styles.exclude, { justifyContent: 'flex-start', paddingLeft: 20 }]}
-            onPress={() => props.onDelete(props.id)}>
+            onPress={() => props.onDelete(props.Id)}>
             <Icon name='trash' size={30} color='#FFF' />
         </TouchableOpacity>,
     ]
 
     return (
         <Swipeable leftActionActivationDistance={200}
-            onLeftActionActivate={() => props.onDelete(props.id)}
+            onLeftActionActivate={() => props.onDelete(props.Id)}
             leftContent={leftContent}
             rightButtons={rightContent}>
             <View style={styles.container}>
-                <TouchableWithoutFeedback onPress={() => props.onToggleTask(props.id)}>
+                <TouchableWithoutFeedback onPress={() => props.onToggleTask(props.Id)}>
                     <View style={styles.checkContainer}>{check}</View>
                 </TouchableWithoutFeedback>
                 <View>
-                    <Text style={[styles.description, descStyle]}>{props.desc}</Text>
+                    <Text style={[styles.description, descStyle]}>{props.Descricao}</Text>
                     <Text style={[styles.date]}>
-                        {moment(props.estimateAt).locale('pt-br').format('ddd, D [de] MMMM')}
+                        {moment(props.EstimateAt).locale('pt-br').format('ddd, D [de] MMMM')}
                     </Text>
                 </View>
             </View>
